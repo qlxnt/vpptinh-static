@@ -1,0 +1,149 @@
+---
+const { title = "VPP TINH - Premium Buddhist Supplies & Zen Office Decor" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{title}</title>
+    
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="p:domain_verify" content="d17be7533c035a2be4f0ff4b71feb5e1"/>
+
+    <!-- Đã thêm is:inline -->
+    <script is:inline src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Đã thêm is:inline và mã màu đặc trưng cho bản tiếng Anh -->
+    <script is:inline>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: '#ee4d2d', amazon: '#f90', zen: '#4a5568' } } }
+        }
+    </script>
+    
+    <style>
+        .loader { border-top-color: #ee4d2d; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .blog-content h2 { font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #2d3748; }
+        .blog-content h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #4a5568; }
+        .blog-content p { margin-bottom: 1rem; line-height: 1.7; color: #4b5563; }
+        .blog-content a { color: #ee4d2d; font-weight: 600; text-decoration: underline; transition: color 0.2s;}
+        
+        .img-square-wrapper { position: relative; width: 100%; padding-top: 100%; background-color: #f9fafb; overflow: hidden; border-bottom: 1px solid #f3f4f6; }
+        .img-square-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; mix-blend-mode: multiply; transition: transform 0.4s ease; }
+        .product-card:hover .img-square-wrapper img { transform: scale(1.08); }
+        .product-title-clamp { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em; line-height: 1.4em; }
+
+        .sticky-sidebar { position: sticky; top: 90px; height: max-content; }
+        .marquee-container { background-color: #fff2f0; border-bottom: 1px solid #fee2e2; overflow: hidden; white-space: nowrap; position: relative; padding: 8px 0; }
+        .marquee-content { display: inline-block; font-size: 13px; font-weight: 600; color: #d32f2f; padding-left: 100%; animation: marquee 28s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        .fab-container { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; gap: 12px; flex-direction: column; }
+        .fab-btn { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; border: none; }
+        .fab-btn:hover { transform: scale(1.1); }
+        .fab-whatsapp { background-color: #25D366; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Top Bar EN -->
+    <div class="bg-primary text-white text-xs sm:text-sm py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div class="flex items-center gap-2 font-medium">
+                <i class="fa-solid fa-leaf"></i> 
+                <span class="hidden sm:inline">Cultivate peace in your workspace & home</span>
+                <span class="sm:hidden">Zen Workspace Essentials</span>
+            </div>
+            <div class="flex items-center gap-4 font-semibold">
+                <a href="https://wa.me/84931736266" target="_blank" class="hover:text-gray-200 transition"><i class="fa-brands fa-whatsapp mr-1"></i> B2B Wholesale Contact</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar EN -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 sm:h-20 items-center gap-2 sm:gap-4">
+                <a href="/en" class="flex-shrink-0 flex items-center cursor-pointer block">
+                    <i class="fa-solid fa-yin-yang text-primary text-2xl sm:text-3xl mr-1 sm:mr-2"></i>
+                    <span class="font-black text-xl sm:text-2xl tracking-tight text-gray-900 hidden sm:block">VPP TINH</span>
+                </a>
+                
+                <div class="flex-1 max-w-2xl mx-auto pl-2 sm:pl-0">
+                    <div class="relative rounded-full shadow-sm flex border-2 border-primary overflow-hidden bg-white h-10 sm:h-11">
+                        <input type="text" class="block w-full border-none py-2 pl-4 pr-2 focus:outline-none text-xs sm:text-sm" placeholder="Search Buddha statues, incense, zen decor...">
+                        <button class="bg-primary hover:bg-red-600 text-white px-4 sm:px-6 font-bold transition flex items-center justify-center">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-5 pl-1 sm:pl-2">
+                    <div class="flex items-center bg-gray-100 rounded-full p-1 border border-gray-200 mr-1 sm:mr-0">
+                        <a href="/" class="text-gray-500 hover:text-gray-800 font-medium text-[10px] sm:text-xs px-2 sm:px-3 py-1 rounded-full transition cursor-pointer">🇻🇳 VN</a>
+                        <button class="bg-white text-primary font-bold text-[10px] sm:text-xs px-2 sm:px-3 py-1 rounded-full shadow-sm cursor-default">🇺🇸 EN</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-gray-100 border-b border-gray-200 text-center py-2 px-4 text-[10px] sm:text-xs text-gray-500">
+        <p>VPP TINH is a participant in the Amazon Services LLC Associates Program. We earn from qualifying purchases of curated Zen & Buddhist products.</p>
+    </div>
+
+    <!-- Marquee EN -->
+    <div class="marquee-container">
+        <div class="marquee-content">
+            ✨ WELCOME TO VPP TINH | HANDPICKED BUDDHIST STATUES, MEDITATION INCENSE & ZEN OFFICE DECOR &nbsp;&nbsp; | &nbsp;&nbsp; 📦 SECURE CHECKOUT VIA AMAZON &nbsp;&nbsp; | &nbsp;&nbsp; 🤝 CONTACT US VIA WHATSAPP FOR DIRECT B2B WHOLESALE EXPORTS FROM VIETNAM!
+        </div>
+    </div>
+
+    <!-- VÙNG NỘI DUNG ĐỘNG CỦA ASTRO -->
+    <slot />
+
+    <!-- FAB WhatsApp -->
+    <div class="fab-container">
+        <a href="https://wa.me/84931736266" target="_blank" class="fab-btn fab-whatsapp" title="WhatsApp Us (B2B Wholesale)">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+    </div>
+
+    <!-- Footer EN -->
+    <footer class="bg-gray-900 pt-10 sm:pt-14 pb-5 sm:pb-6 border-t-4 border-primary mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
+                <div>
+                    <div class="flex items-center mb-3 text-white">
+                        <i class="fa-solid fa-yin-yang text-primary text-2xl sm:text-3xl mr-2"></i>
+                        <span class="font-black text-xl sm:text-2xl tracking-tight">VPP TINH</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed mb-4">Your trusted source for authentic Buddhist supplies, Zen office decor, and meditation essentials to cultivate peace and productivity.</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold text-sm sm:text-base mb-3 uppercase tracking-wider">Contact & Wholesale</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li class="flex items-start gap-2"><i class="fa-solid fa-location-dot mt-1 text-primary"></i> 265/3 Binh Tien Street, Ho Chi Minh City, Vietnam</li>
+                        <li class="flex items-center gap-2"><i class="fa-brands fa-whatsapp text-primary"></i> +84 931 736 266</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-4 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="text-center md:text-left">
+                    <p class="text-gray-500 text-xs">&copy; 2026 VPP TINH. All rights reserved.</p>
+                    <a href="/en/privacy" class="text-gray-500 hover:text-gray-300 text-xs underline mt-1 inline-block transition">Privacy Policy & Affiliate Disclosure</a>
+                </div>
+                <div class="flex gap-2 text-gray-400 text-2xl">
+                    <i class="fa-brands fa-amazon"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

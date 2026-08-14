@@ -1,0 +1,92 @@
+---
+import LayoutVi from '../layouts/LayoutVi.astro';
+import SidebarSEO from '../components/SidebarSEO.astro'; // Đã import Component Sidebar
+import { supabase } from '../lib/supabase.js';
+
+// 1. HÀM TẠO ĐƯỜNG DẪN TĨNH (Chạy lúc Build)
+export async function getStaticPaths() {
+    const { data: products, error } = await supabase
+        .from('vpp_catalog')
+        .select('*')
+        .in('platform', ['Shopee', 'Shopee VN', 'Lazada']); 
+
+    if (error || !products) {
+        return [];
+    }
+
+    return products.map((product) => ({
+        params: { slug: product.slug },
+        props: { product },
+    }));
+}
+
+// 2. NHẬN DỮ LIỆU TỪ GETSTATICPATHS
+const { product } = Astro.props;
+
+// Xử lý giá tiền
+let finalPrice = product.price || 0;
+const isAmazon = product.platform?.includes('Amazon');
+if (!isAmazon && finalPrice > 0 && finalPrice < 1000) {
+    finalPrice = finalPrice * 1000;
+}
+const priceFormatted = isAmazon 
+    ? `$${(finalPrice / 100).toFixed(2)}` 
+    : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
+
+const mainImg = (product.images && product.images.length > 0) ? product.images[0] : 'https://via.placeholder.com/500';
+const platformDisplay = product.platform === 'Shopee VN' ? 'Shopee' : (product.platform || 'Sàn TMĐT');
+---
+
+<LayoutVi title={`${product.seo_title || product.name} | VPP TỊNH`}>
+    <!-- Sửa lại thẻ bọc ngoài thành flex-row để chia cột -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full flex flex-col lg:flex-row gap-5 sm:gap-8">
+        
+        <!-- Cột Nội Dung Chính (Chiếm 3/4) -->
+        <main class="w-full lg:w-3/4">
+            <a href="/" class="mb-4 inline-flex items-center text-gray-500 hover:text-primary transition font-medium text-sm">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại trang chủ
+            </a>
+            
+            <!-- Khối Thông Tin Sản Phẩm -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                    <div class="p-4 sm:p-6 bg-gray-50 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                        <img src={mainImg} alt={product.name} class="max-w-full max-h-[350px] object-contain mix-blend-multiply" />
+                    </div>
+                    
+                    <div class="p-4 sm:p-8 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{product.category || 'Danh mục'}</span>
+                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-3">{product.name}</h1>
+                        <div class="text-2xl sm:text-3xl font-extrabold text-primary mb-4">{priceFormatted}</div>
+                        
+                        <div class="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-6 border border-red-100">
+                            <i class="fa-solid fa-truck-fast mr-2"></i> Trợ giá vận chuyển khi mua qua đối tác.
+                        </div>
+                        
+                        <div class="prose prose-sm text-gray-600 mb-6 blog-content" set:html={product.description}></div>
+                        
+                        <div class="flex gap-3 mt-auto">
+                            <a href={product.affiliate_link} target="_blank" rel="nofollow" class="w-full bg-primary hover:bg-red-600 text-white font-bold py-3 sm:py-4 rounded-lg shadow-md transition flex items-center justify-center text-base">
+                                <i class="fa-solid fa-cart-shopping mr-2"></i> Mua trên {platformDisplay}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khối SEO Content -->
+            {product.seo_content && (
+                <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-8">
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">Đánh giá chi tiết sản phẩm</h2>
+                    <div class="blog-content text-sm sm:text-base text-gray-700" set:html={product.seo_content}></div>
+                </div>
+            )}
+        </main>
+
+        <!-- Cột Sidebar (Chiếm 1/4) -->
+        <aside class="w-full lg:w-1/4 mt-2 lg:mt-0">
+            <SidebarSEO />
+        </aside>
+
+    </div>
+</LayoutVi>

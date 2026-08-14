@@ -1,0 +1,85 @@
+---
+import LayoutEn from '../../layouts/LayoutEn.astro';
+import SidebarZenBlog from '../../components/SidebarZenBlog.astro'; // Đã import Component Sidebar
+import { supabase } from '../../lib/supabase.js';
+
+// 1. HÀM TẠO ĐƯỜNG DẪN TĨNH (Chỉ lấy sản phẩm Amazon)
+export async function getStaticPaths() {
+    const { data: products, error } = await supabase
+        .from('vpp_catalog')
+        .select('*')
+        .ilike('platform', '%Amazon%'); 
+
+    if (error || !products) {
+        return [];
+    }
+
+    return products.map((product) => ({
+        params: { slug: product.slug },
+        props: { product },
+    }));
+}
+
+// 2. NHẬN DỮ LIỆU VÀ XỬ LÝ
+const { product } = Astro.props;
+
+const finalPrice = product.price || 0;
+const priceFormatted = `$${(finalPrice / 100).toFixed(2)}`;
+
+const mainImg = (product.images && product.images.length > 0) ? product.images[0] : 'https://via.placeholder.com/500';
+---
+
+<LayoutEn title={`${product.seo_title || product.name} | VPP TINH`}>
+    <!-- Khung chia 2 cột -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full flex flex-col lg:flex-row gap-5 sm:gap-8">
+        
+        <!-- Cột Nội Dung Chính -->
+        <main class="w-full lg:w-3/4">
+            <a href="/en" class="mb-4 inline-flex items-center text-gray-500 hover:text-primary transition font-medium text-sm">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i> Back to Store
+            </a>
+            
+            <!-- Khối Thông Tin Sản Phẩm -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+                    <div class="p-4 sm:p-6 bg-gray-50 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                        <img src={mainImg} alt={product.name} class="max-w-full max-h-[350px] object-contain mix-blend-multiply" />
+                    </div>
+                    
+                    <div class="p-4 sm:p-8 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">{product.category || 'Category'}</span>
+                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-3">{product.name}</h1>
+                        <div class="text-2xl sm:text-3xl font-extrabold text-amazon mb-4">{priceFormatted}</div>
+                        
+                        <div class="bg-blue-50 text-blue-700 text-sm p-3 rounded-lg mb-6 border border-blue-100">
+                            <i class="fa-brands fa-amazon mr-2"></i> Fast & Secure delivery via Amazon.
+                        </div>
+                        
+                        <!-- Nội dung mô tả -->
+                        <div class="prose prose-sm text-gray-600 mb-6 blog-content" set:html={product.description}></div>
+                        
+                        <div class="flex gap-3 mt-auto">
+                            <a href={product.affiliate_link} target="_blank" rel="nofollow" class="w-full bg-amazon hover:bg-yellow-500 text-black font-bold py-3 sm:py-4 rounded-lg shadow-md transition flex items-center justify-center text-base">
+                                <i class="fa-solid fa-cart-shopping mr-2"></i> Buy on Amazon
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khối SEO Content Tiếng Anh -->
+            {product.seo_content && (
+                <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-8">
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">In-depth Review & Details</h2>
+                    <div class="blog-content text-sm sm:text-base text-gray-700" set:html={product.seo_content}></div>
+                </div>
+            )}
+        </main>
+
+        <!-- Cột Sidebar Tiếng Anh -->
+        <aside class="w-full lg:w-1/4 mt-2 lg:mt-0">
+            <SidebarZenBlog />
+        </aside>
+
+    </div>
+</LayoutEn>

@@ -1,0 +1,41 @@
+---
+// KHU VỰC 1: XỬ LÝ SERVER-SIDE
+import { supabase } from '../lib/supabase.js';
+
+// Truy vấn 5 sản phẩm/bài viết mới nhất có chứa nội dung SEO dành cho thị trường nội địa
+const { data: seoArticles, error } = await supabase
+    .from('vpp_catalog')
+    .select('slug, seo_title, name, images')
+    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
+    .not('seo_title', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(5);
+---
+
+<!-- KHU VỰC 2: RENDER GIAO DIỆN -->
+<div class="sticky-sidebar bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center gap-2 border-b-2 border-primary pb-2 mb-3">
+        <i class="fa-solid fa-newspaper text-primary text-lg"></i>
+        <h3 class="text-sm sm:text-base font-bold text-gray-800 uppercase tracking-wide">Góc Tư Vấn</h3>
+    </div>
+    
+    <div class="flex flex-col gap-2">
+        {(!seoArticles || seoArticles.length === 0) ? (
+            <div class="text-sm text-gray-500 text-center py-4">Chưa có bài viết SEO nào.</div>
+        ) : (
+            seoArticles.map((item) => {
+                const title = item.seo_title || item.name;
+                const imgUrl = (item.images && item.images.length > 0) ? item.images[0] : 'https://via.placeholder.com/150';
+                
+                return (
+                    <a href={`/${item.slug}`} class="flex gap-2 sm:gap-3 items-center group hover:bg-gray-50 p-2 -mx-2 rounded-lg transition-colors block">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-white p-1">
+                            <img src={imgUrl} class="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform" loading="lazy" alt={title} />
+                        </div>
+                        <h4 class="text-xs sm:text-sm font-semibold text-gray-700 line-clamp-3 group-hover:text-primary">{title}</h4>
+                    </a>
+                )
+            })
+        )}
+    </div>
+</div>
