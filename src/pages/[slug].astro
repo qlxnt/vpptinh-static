@@ -1,7 +1,7 @@
 ---
-import LayoutEn from '../layouts/LayoutEn.astro';
-import SidebarZenBlog from '../components/SidebarZenBlog.astro'; // Đã import Component Sidebar
-import { supabase } from '../lib/supabase.js';
+import LayoutEn from '../../layouts/LayoutEn.astro';
+import SidebarZenBlog from '../../components/SidebarZenBlog.astro'; // Đã import Component Sidebar
+import { supabase } from '../../lib/supabase.js';
 
 // 1. HÀM TẠO ĐƯỜNG DẪN TĨNH (Chỉ lấy sản phẩm Amazon)
 export async function getStaticPaths() {
