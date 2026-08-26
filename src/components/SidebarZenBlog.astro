@@ -28,7 +28,7 @@ const { data: zenArticles, error } = await supabase
                 const imgUrl = (item.images && item.images.length > 0) ? item.images[0] : 'https://via.placeholder.com/150';
                 
                 return (
-                    <a href={`/en/${item.slug}`} class="flex gap-2 sm:gap-3 items-center group hover:bg-gray-50 p-2 -mx-2 rounded-lg transition-colors block">
+                    <a href={`${item.slug}`} class="flex gap-2 sm:gap-3 items-center group hover:bg-gray-50 p-2 -mx-2 rounded-lg transition-colors block">
                         <div class="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-white p-1">
                             <img src={imgUrl} class="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform" loading="lazy" alt={title} />
                         </div>
