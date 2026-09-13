@@ -1,582 +1,112 @@
 ---
-// Khai báo biến trang để đảm bảo Astro Compiler nhận diện đúng cấu trúc
-const pageTitle = "VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng";
+// Nhúng bộ khung giao diện và bộ kết nối cơ sở dữ liệu vào
+import MainLayout from '../layouts/MainLayout.astro';
+import { supabase } from '../lib/supabase.js';
+
+// 1. GỌI DỮ LIỆU TỪ SUPABASE NGAY LÚC BIÊN DỊCH (Trang sẽ load với tốc độ bàn thờ)
+const { data: products, error } = await supabase
+    .from('vpp_catalog')
+    .select('name, slug, price, images, platform, category')
+    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
+    .order('created_at', { ascending: false })
+    .limit(200);
+
+if (error) {
+    console.error("Lỗi lấy dữ liệu trang chủ:", error.message);
+}
+
+// 2. HÀM PHÂN NHÓM SẢN PHẨM (Xử lý ngay trên Server)
+function getMainCategory(rawCat) {
+    if (!rawCat) return 'Sản Phẩm Khác';
+    return rawCat.trim();
+}
+
+const groupedProducts = {};
+if (products) {
+    products.forEach(p => {
+        const mainCat = getMainCategory(p.category);
+        if (!groupedProducts[mainCat]) groupedProducts[mainCat] = [];
+        groupedProducts[mainCat].push(p);
+    });
+}
 ---
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{pageTitle}</title>
-    <meta name="facebook-domain-verification" content="famm52c1ej9x2rlxu5y5hxq2tx23f6" />
-    <meta name="p:domain_verify" content="d17be7533c035a2be4f0ff4b71feb5e1"/>
 
-    <meta property="og:title" content="VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng" />
-    <meta property="og:description" content="Chuyên cung cấp sỉ lẻ văn phòng phẩm, thiết bị văn phòng và đồ thờ cúng cao cấp.!" />
-    <meta property="og:image" content="https://vpptinh.com/static/banner-share.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://vpptinh.com/" />
-    
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-
-    <script is:inline src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <script is:inline>
-        tailwind.config = {
-            theme: { extend: { colors: { primary: '#ee4d2d', amazon: '#ff9900', } } }
-        }
-    </script>
-    <style>
-        .loader { border-top-color: #ee4d2d; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+<MainLayout>
+    <!-- Khung chia cột: 3/4 cho sản phẩm, 1/4 cho Sidebar -->
+    <div class="flex flex-col lg:flex-row gap-5 sm:gap-8">
         
-        /* CSS chuẩn hóa Blog SEO */
-        .blog-content h2 { font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1f2937; }
-        .blog-content h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #374151; }
-        .blog-content p { margin-bottom: 1rem; line-height: 1.6; color: #4b5563; }
-        .blog-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; color: #4b5563; }
-        .blog-content li { margin-bottom: 0.5rem; }
-        .blog-content strong { color: #111827; }
-        .blog-content a { color: #ee4d2d; font-weight: 600; text-decoration: underline; transition: color 0.2s;}
-        .blog-content a:hover { color: #c0392b; }
-
-        /* Hiệu ứng Nút Xem Thêm SEO */
-        .seo-content-wrapper { position: relative; max-height: 300px; overflow: hidden; transition: max-height 0.8s ease-in-out; }
-        .seo-content-wrapper.expanded { max-height: 8000px; }
-        .seo-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 100px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1)); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
-        .seo-content-wrapper.expanded .seo-overlay { display: none; }
-
-        /* Kỹ thuật ép khung ảnh 1:1 */
-        .img-square-wrapper { position: relative; width: 100%; padding-top: 100%; background-color: #f9fafb; overflow: hidden; border-bottom: 1px solid #f3f4f6; }
-        .img-square-wrapper img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; mix-blend-mode: multiply; transition: transform 0.4s ease; }
-        .product-card:hover .img-square-wrapper img { transform: scale(1.08); }
-        
-        .product-title-clamp { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em; line-height: 1.4em; }
-
-        /* Sidebar SEO dính trượt */
-        .sticky-sidebar { position: sticky; top: 90px; height: max-content; }
-
-        /* Thanh Marquee Chạy Chữ */
-        .marquee-container { background-color: #fff2f0; border-bottom: 1px solid #fee2e2; overflow: hidden; white-space: nowrap; position: relative; padding: 6px 0; }
-        .marquee-content { display: inline-block; font-size: 13px; font-weight: 600; color: #d32f2f; padding-left: 100%; animation: marquee 25s linear infinite; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-
-        /* Nút Nổi Cố định (FAB) */
-        .fab-container { position: fixed; bottom: 90px; right: 20px; z-index: 999; display: flex; gap: 12px; flex-direction: column; }
-        .fab-btn { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; border: none; }
-        .fab-btn:hover { transform: scale(1.1); }
-        .fab-zalo { background-color: #0068ff; }
-    </style>
-    <script is:inline>
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '1660654998507019');
-        fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
-    /></noscript>
-</head>
-<body class="bg-gray-50 font-sans text-gray-800 flex flex-col min-h-screen">
-
-    <div class="bg-primary text-white text-xs sm:text-sm py-2">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <div class="flex items-center gap-2 font-medium">
-                <i class="fa-solid fa-truck-fast"></i> 
-                <span class="hidden sm:inline"> Cảm ơn quý khách đã ghé thăm </span>
-                <span class="sm:hidden">Chúc quý khách có một trải nghiệm thật thoải mái </span>
-            </div>
-            <div class="flex items-center gap-4 font-semibold">
-                <a href="#" class="hover:text-gray-200 transition"><i class="fa-solid fa-phone mr-1"></i> 0931.736.266</a>
-            </div>
-        </div>
-    </div>
-
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 sm:h-20 items-center gap-2 sm:gap-4">
-                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="goHome()">
-                    <i class="fa-solid fa-book-open text-primary text-2xl sm:text-3xl mr-1 sm:mr-2"></i>
-                    <span class="font-black text-xl sm:text-2xl tracking-tight text-gray-900 hidden sm:block">VPP TỊNH</span>
+        <main class="w-full lg:w-3/4">
+            <!-- Nếu không có sản phẩm -->
+            {Object.keys(groupedProducts).length === 0 && (
+                <div class="text-center bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-700">Chưa có sản phẩm nào</h2>
                 </div>
-                
-                <div class="flex-1 max-w-2xl mx-auto pl-2 sm:pl-0">
-                    <div class="relative rounded-full shadow-sm flex border-2 border-primary overflow-hidden bg-white h-10 sm:h-11">
-                        <select onchange="handleCategorySelect(this.value)" class="hidden sm:block bg-gray-100 border-none outline-none text-xs sm:text-sm px-3 text-gray-700 font-medium cursor-pointer border-r border-gray-200 w-36">
-                            <option value="">Tất cả danh mục</option>
-                            <option value="Văn Phòng Phẩm">Văn Phòng Phẩm</option>
-                            <option value="Đồ Thờ Cúng">Đồ Thờ Cúng</option>
-                            <option value="Đồ Gia Dụng">Đồ Gia Dụng</option>
-                        </select>
-                        <div class="sm:hidden relative bg-gray-100 flex items-center justify-center text-gray-500 border-r border-gray-200 w-10">
-                            <i class="fa-solid fa-filter"></i>
-                            <select onchange="handleCategorySelect(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                                <option value="">Tất cả</option>
-                                <option value="Văn Phòng Phẩm">Văn Phòng Phẩm</option>
-                                <option value="Đồ Thờ Cúng">Đồ Thờ Cúng</option>
-                                <option value="Đồ Gia Dụng">Đồ Gia Dụng</option>
-                            </select>
-                        </div>
-                        
-                        <input type="text" id="searchInput" class="block w-full border-none py-2 pl-3 pr-2 focus:outline-none text-xs sm:text-sm" placeholder="Tìm bút bi, giấy A4, đồ thờ...">
-                        <button class="bg-primary hover:bg-red-600 text-white px-4 sm:px-6 font-bold transition flex items-center justify-center">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </button>
+            )}
+
+            <!-- Lặp qua từng danh mục để in ra khối sản phẩm -->
+            {Object.entries(groupedProducts).map(([category, items]) => (
+                <div class="mb-5 bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+                    
+                    <div class="flex justify-between items-end mb-3 border-b-2 border-primary pb-2">
+                        <h3 class="text-sm sm:text-lg font-bold text-gray-800 uppercase tracking-wide flex items-center">
+                            <i class="fa-solid fa-layer-group text-primary mr-2 text-base sm:text-lg"></i> {category}
+                        </h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
+                        {items.slice(0, 8).map((p) => {
+                            // Xử lý giá cả và hình ảnh
+                            let imgUrl = p.images?.[0] || 'https://via.placeholder.com/300';
+                            const isAmazon = p.platform?.includes('Amazon');
+                            
+                            let finalPrice = p.price || 0;
+                            if (!isAmazon && finalPrice > 0 && finalPrice < 1000) {
+                                finalPrice = finalPrice * 1000;
+                            }
+                            const priceFormatted = isAmazon 
+                                ? `$${(finalPrice / 100).toFixed(2)}` 
+                                : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
+
+                            return (
+                                <!-- TỐI ƯU SEO: Đổi thẻ div onclick thành thẻ <a> trỏ link trực tiếp -->
+                                <a href={`/san-pham/${p.slug}`} class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 flex flex-col h-full group">
+                                    <div class="img-square-wrapper">
+                                        <img src={imgUrl} loading="lazy" alt={p.name} />
+                                    </div>
+                                    <div class="p-2 sm:p-3 flex flex-col flex-grow">
+                                        <h4 class="text-xs sm:text-sm text-gray-800 font-medium product-title-clamp mb-1.5 group-hover:text-primary">{p.name}</h4>
+                                        <div class="mt-auto flex items-center justify-between pt-1.5 border-t border-gray-50">
+                                            <span class="text-primary font-bold text-sm sm:text-base">{priceFormatted}</span>
+                                            <div class="bg-red-50 text-red-500 text-[9px] px-1 rounded font-bold border border-red-100">MỚI</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            );
+                        })}
+                    </div>
+                    
+                    <div class="mt-3 text-right">
+                        <!-- Tương tự, dùng thẻ <a> để SEO bot đọc được danh mục -->
+                        <a href={`/danh-muc/${category}`} class="text-primary text-[12px] font-bold hover:text-red-700 transition-colors">
+                            Xem tất cả ({items.length} sản phẩm) <i class="fa-solid fa-angle-right ml-0.5"></i>
+                        </a>
                     </div>
                 </div>
-
-                <div class="flex items-center space-x-2 sm:space-x-5 pl-1 sm:pl-2">
-                    <div class="relative cursor-pointer text-gray-600 hover:text-primary transition hidden sm:block">
-                        <i class="fa-solid fa-cart-shopping text-2xl"></i>
-                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-                    </div>
-                    <button class="text-gray-600 hover:text-primary transition sm:hidden text-xl ml-2"><i class="fa-solid fa-bars"></i></button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="marquee-container">
-        <div class="marquee-content">
-            🔥 CHÀO MỪNG ĐẾN VỚI VPP TỊNH - CUNG CẤP SỈ LẺ VĂN PHÒNG PHẨM & ĐỒ THỜ CÚNG ! &nbsp;&nbsp; | &nbsp;&nbsp; 🚛 FREESHIP TOÀN QUỐC &nbsp;&nbsp; | &nbsp;&nbsp; 🎁 KẾT NỐI TRỰC TIẾP QUA ZALO ĐỂ NHẬN BÁO GIÁ SỈ LÔ LỚN TỐT NHẤT!
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full flex flex-col lg:flex-row gap-5 sm:gap-8">
-        
-        <main class="w-full lg:w-3/4" id="app-container">
-            <div class="flex justify-center items-center h-64"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div></div>
+            ))}
         </main>
 
-        <aside class="w-full lg:w-1/4 mt-2 lg:mt-0" id="sidebar-container">
+        <!-- Sidebar SEO (Cột bên phải) -->
+        <aside class="w-full lg:w-1/4 mt-2 lg:mt-0">
             <div class="sticky-sidebar bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex items-center gap-2 border-b-2 border-primary pb-2 mb-3">
                     <i class="fa-solid fa-newspaper text-primary text-lg"></i>
                     <h3 class="text-sm sm:text-base font-bold text-gray-800 uppercase tracking-wide">Góc Tư Vấn</h3>
                 </div>
-                <div id="seo-sidebar-list" class="flex flex-col gap-2">
-                    <div class="text-sm text-gray-500 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang tải bài viết...</div>
+                <div class="flex flex-col gap-2 text-sm text-gray-500 text-center py-4">
+                    <p>Cập nhật góc review trong bước sau.</p>
                 </div>
             </div>
         </aside>
+
     </div>
-
-    <div class="fab-container">
-        <a href="https://zalo.me/0931736266" target="_blank" class="fab-btn fab-zalo" title="Chat Zalo">
-            <i class="fa-solid fa-comment-dots text-2xl"></i>
-        </a>
-    </div>
-
-    <footer class="bg-gray-900 pt-10 sm:pt-14 pb-5 sm:pb-6 border-t-4 border-primary mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
-                <div>
-                    <div class="flex items-center mb-3 text-white">
-                        <i class="fa-solid fa-book-open text-primary text-2xl sm:text-3xl mr-2"></i>
-                        <span class="font-black text-xl sm:text-2xl tracking-tight">VPP TỊNH</span>
-                    </div>
-                    <p class="text-gray-400 text-sm leading-relaxed mb-4">Cung cấp sỉ lẻ văn phòng phẩm, giấy in và đồ đồng thờ cúng tâm linh. Sản phẩm chính hãng, giá cạnh tranh nhất thị trường.</p>
-                </div>
-                <div>
-                    <h4 class="text-white font-bold text-sm sm:text-base mb-3 uppercase tracking-wider">Liên Hệ</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li class="flex items-start gap-2"><i class="fa-solid fa-location-dot mt-1 text-primary"></i> 265/3 Đường Bình Tiên , Thành Phố Hồ Chí Minh </li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-phone text-primary"></i> 0931.736.266 (Zalo Sỉ)</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-white font-bold text-sm sm:text-base mb-3 uppercase tracking-wider">Hỗ Trợ Khách Hàng</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="#" onclick="event.preventDefault(); goPage('chinh-sach-van-chuyen')" class="hover:text-white hover:underline transition">Chính sách vận chuyển</a></li>
-                        <li><a href="#" onclick="event.preventDefault(); goPage('chinh-sach-doi-tra')" class="hover:text-white hover:underline transition">Chính sách đổi trả</a></li>
-                        <li><a href="#" onclick="event.preventDefault(); goPage('huong-dan-mua-si')" class="hover:text-white hover:underline transition">Hướng dẫn mua sỉ/đại lý</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-white font-bold text-sm sm:text-base mb-3 uppercase tracking-wider">Nhận Khuyến Mãi</h4>
-                    <div class="flex mt-2">
-                        <input type="email" placeholder="Email của bạn..." class="w-full bg-gray-800 border-none text-white text-sm px-3 py-2 rounded-l-md focus:outline-none">
-                        <button class="bg-primary hover:bg-red-600 text-white px-3 py-2 rounded-r-md transition"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 pt-4 flex flex-col md:flex-row justify-between items-center gap-3">
-                <p class="text-gray-500 text-xs text-center">&copy; 2026 Bản quyền thuộc về Cửa hàng VPP TỊNH.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script is:inline>
-        const SUPABASE_URL = 'https://nwjttlsrogmgjqwuyokb.supabase.co'; 
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53anR0bHNyb2dtZ2pxd3V5b2tiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU3OTc0NiwiZXhwIjoyMDkwMTU1NzQ2fQ.juiQrHJWAnC90bU6Ip96fS8Qd6PaGDQnzv9vdj-UnlI'; 
-        
-        const appContainer = document.getElementById('app-container');
-        const sidebarContainer = document.getElementById('sidebar-container');
-        let supabaseClient = null;
-
-        try {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (err) {
-            appContainer.innerHTML = `<div class="text-center text-red-500 bg-red-50 p-6 rounded-lg mt-10"><b>Lỗi khởi tạo:</b> ${err.message}</div>`;
-        }
-
-        function cleanHTML(htmlString) {
-            if (!htmlString) return '';
-            const txt = document.createElement("textarea");
-            txt.innerHTML = htmlString;
-            return txt.value.replace(/```html/g, '').replace(/```/g, '').trim();
-        }
-
-        function getMainCategory(rawCat) {
-            if (!rawCat) return 'Sản Phẩm Khác';
-            return rawCat.trim(); 
-        }
-
-        window.expandSeoContent = () => document.getElementById('seoWrapper').classList.add('expanded');
-       
-        window.handleCategorySelect = function(value) {
-            if (value) { goCategory(value); } 
-            else { goHome(); }
-        };
-
-        async function loadSeoSidebar() {
-            if (!supabaseClient) return;
-            const sidebarList = document.getElementById('seo-sidebar-list');
-            try {
-                const { data, error } = await supabaseClient
-                    .from('vpp_catalog')
-                    .select('slug, seo_title, name, images')
-                    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
-                    .not('seo_title', 'is', null)
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-                    
-                if (error || !data.length) { sidebarList.innerHTML = `<div class="text-sm text-gray-500 text-center py-2">Chưa có bài viết.</div>`; return; }
-                let html = '';
-                data.forEach(item => {
-                    const title = item.seo_title || item.name;
-                    let imgUrl = item.images?.[0] || 'https://via.placeholder.com/150';
-                    html += `
-                        <div class="flex gap-2 sm:gap-3 items-center cursor-pointer group hover:bg-gray-50 p-2 -mx-2 rounded-lg transition-colors" onclick="goDetail('${item.slug}')">
-                            <div class="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-white p-1">
-                                <img src="${imgUrl}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform" loading="lazy">
-                            </div>
-                            <h4 class="text-xs sm:text-sm font-semibold text-gray-700 line-clamp-3 group-hover:text-primary">${title}</h4>
-                        </div>`;
-                });
-                sidebarList.innerHTML = html;
-            } catch (err) { sidebarList.innerHTML = `<div class="text-xs text-red-500">Lỗi tải dữ liệu</div>`; }
-        }
-
-        async function handleRoute() {
-            if (!supabaseClient) return;
-            const urlParams = new URLSearchParams(window.location.search);
-            const slug = urlParams.get('slug');
-            const cat = urlParams.get('cat');
-            const page = urlParams.get('page');
-            
-            sidebarContainer.style.display = page ? 'none' : 'block';
-            
-            if (slug) await renderDetailView(slug);
-            else if (cat) await renderCategoryView(cat);
-            else if (page) await renderPageView(page);
-            else await renderHomeView();
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function goHome() { window.history.pushState({}, '', '/'); handleRoute(); }
-        function goDetail(slug) { window.history.pushState({}, '', `?slug=${slug}`); handleRoute(); }
-        function goCategory(cat) { window.history.pushState({}, '', `?cat=${encodeURIComponent(cat)}`); handleRoute(); }
-        function goPage(pageId) { window.history.pushState({}, '', `?page=${pageId}`); handleRoute(); }
-        window.addEventListener('popstate', handleRoute);
-
-        async function renderHomeView() {
-            document.title = "VPP TỊNH - Cung Cấp Văn Phòng Phẩm";
-            appContainer.innerHTML = `<div class="flex justify-center items-center h-64"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>`;
-
-            try {
-                const { data: products, error } = await supabaseClient
-                    .from('vpp_catalog')
-                    .select('name, slug, price, images, platform, category')
-                    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
-                    .order('created_at', { ascending: false })
-                    .limit(200);
-                    
-                if (error) throw error;
-                if (!products || !products.length) {
-                    appContainer.innerHTML = `<div class="text-center bg-white rounded-xl shadow-sm p-8 border border-gray-100"><h2 class="text-xl font-bold text-gray-700">Chưa có sản phẩm nào</h2></div>`;
-                    return;
-                }
-
-                const groupedProducts = {};
-                products.forEach(p => {
-                    const mainCat = getMainCategory(p.category);
-                    if (!groupedProducts[mainCat]) groupedProducts[mainCat] = [];
-                    groupedProducts[mainCat].push(p);
-                });
-
-                let html = ``;
-                for (const [category, items] of Object.entries(groupedProducts)) {
-                    html += `
-                    <div class="mb-5 bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
-                        <div class="flex justify-between items-end mb-3 border-b-2 border-primary pb-2">
-                            <h3 class="text-sm sm:text-lg font-bold text-gray-800 uppercase tracking-wide flex items-center">
-                                <i class="fa-solid fa-layer-group text-primary mr-2 text-base sm:text-lg"></i> ${category.toUpperCase()}
-                            </h3>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">`;
-
-                    const displayItems = items.slice(0, 8); 
-                    
-                    displayItems.forEach((p) => {
-                        let imgUrl = p.images?.[0] || 'https://via.placeholder.com/300';
-                        const isAmazon = p.platform?.includes('Amazon');
-                        
-                        let finalPrice = p.price || 0;
-                        if (!isAmazon && finalPrice > 0 && finalPrice < 1000) {
-                            finalPrice = finalPrice * 1000;
-                        }
-                        const priceFormatted = isAmazon ? `$${(finalPrice / 100).toFixed(2)}` : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
-
-                        html += `
-                            <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:border-primary hover:shadow-md transition-all duration-300 cursor-pointer product-card flex flex-col h-full" onclick="goDetail('${p.slug}')">
-                                <div class="img-square-wrapper"><img src="${imgUrl}" loading="lazy"></div>
-                                <div class="p-2 sm:p-3 flex flex-col flex-grow">
-                                    <h4 class="text-xs sm:text-sm text-gray-800 font-medium product-title-clamp mb-1.5">${p.name}</h4>
-                                    <div class="mt-auto flex items-center justify-between pt-1.5 border-t border-gray-50">
-                                        <span class="text-primary font-bold text-sm sm:text-base">${priceFormatted}</span>
-                                        <div class="bg-red-50 text-red-500 text-[9px] px-1 rounded font-bold border border-red-100">MỚI</div>
-                                    </div>
-                                </div>
-                            </div>`;
-                    });
-                    
-                    html += `</div>
-                        <div class="mt-3 text-right">
-                            <a href="#" onclick="event.preventDefault(); goCategory('${category}')" class="text-primary text-[12px] font-bold hover:text-red-700 transition-colors">
-                                Xem tất cả (${items.length} sản phẩm) <i class="fa-solid fa-angle-right ml-0.5"></i>
-                            </a>
-                        </div>
-                    </div>`;
-                }
-                appContainer.innerHTML = html;
-            } catch (error) { appContainer.innerHTML = `<div class="text-center text-red-500 bg-red-50 p-4 rounded-lg"><b>Lỗi:</b> ${error.message}</div>`; }
-        }
-
-        async function renderCategoryView(catName) {
-            document.title = `${catName.toUpperCase()} | VPP TỊNH`;
-            appContainer.innerHTML = `<div class="flex justify-center items-center h-64"><div class="loader"></div></div>`;
-            try {
-                const { data: products } = await supabaseClient
-                    .from('vpp_catalog')
-                    .select('name, slug, price, images, platform, category')
-                    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
-                    .order('created_at', { ascending: false })
-                    .limit(200);
-                    
-                const items = products.filter(p => getMainCategory(p.category) === catName);
-                
-                let html = `
-                    <button onclick="goHome()" class="mb-3 flex items-center text-gray-500 hover:text-primary transition font-medium text-xs sm:text-sm">
-                        <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
-                    </button>
-                    <div class="bg-white rounded-xl shadow-sm p-3 sm:p-5 border border-gray-100">
-                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-primary uppercase">${catName}</h2>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">`;
-                        
-                items.forEach((p) => {
-                    let imgUrl = p.images?.[0] || 'https://via.placeholder.com/300';
-                    const isAmazon = p.platform?.includes('Amazon');
-                    
-                    let finalPrice = p.price || 0;
-                    if (!isAmazon && finalPrice > 0 && finalPrice < 1000) { finalPrice = finalPrice * 1000; }
-                    const priceFormatted = isAmazon ? `$${(finalPrice / 100).toFixed(2)}` : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
-                    
-                    html += `
-                        <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:border-primary hover:shadow-md cursor-pointer product-card flex flex-col h-full" onclick="goDetail('${p.slug}')">
-                            <div class="img-square-wrapper"><img src="${imgUrl}" loading="lazy"></div>
-                            <div class="p-2 sm:p-3 flex flex-col flex-grow">
-                                <h4 class="text-xs sm:text-sm text-gray-800 font-medium product-title-clamp mb-1.5">${p.name}</h4>
-                                <div class="mt-auto pt-1.5 border-t border-gray-50"><span class="text-primary font-bold text-sm sm:text-base">${priceFormatted}</span></div>
-                            </div>
-                        </div>`;
-                });
-                html += `</div></div>`;
-                appContainer.innerHTML = html;
-            } catch (err) { goHome(); }
-        }
-
-        async function renderDetailView(slug) {
-            appContainer.innerHTML = `<div class="flex justify-center items-center h-64"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12"></div></div>`;
-
-            try {
-                const { data: p, error } = await supabaseClient.from('vpp_catalog').select('*').eq('slug', slug).single();
-                if (error || !p) throw new Error("Không tìm thấy sản phẩm");
-
-                document.title = (p.seo_title || p.name) + " | VPP TỊNH";
-
-                const isAmazon = p.platform?.includes('Amazon');
-                
-                let finalPrice = p.price || 0;
-                if (!isAmazon && finalPrice > 0 && finalPrice < 1000) {
-                    finalPrice = finalPrice * 1000;
-                }
-                const priceFormatted = isAmazon ? `$${(finalPrice / 100).toFixed(2)}` : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
-                
-                const mainImg = p.images?.[0] || 'https://via.placeholder.com/500';
-                const cleanDescription = cleanHTML(p.description);
-                const cleanSeoContent = cleanHTML(p.seo_content);
-                const platformDisplay = p.platform === 'Shopee VN' ? 'Shopee' : (p.platform || 'Sàn TMĐT');
-
-                let relatedProductsHtml = '';
-                const mainCategoryCurrent = getMainCategory(p.category);
-                
-                const { data: allRelated } = await supabaseClient
-                    .from('vpp_catalog')
-                    .select('name, slug, price, images, platform, category')
-                    .in('platform', ['Shopee', 'Shopee VN', 'Lazada'])
-                    .neq('slug', slug)
-                    .order('created_at', { ascending: false })
-                    .limit(50); 
-                
-                if (allRelated) {
-                    const filteredRelated = allRelated.filter(rp => getMainCategory(rp.category) === mainCategoryCurrent).slice(0, 4);
-                    if (filteredRelated.length > 0) {
-                        relatedProductsHtml = `<div class="mt-4 sm:mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-5"><h3 class="text-base sm:text-lg font-bold text-gray-900 mb-3 border-l-4 border-primary pl-2.5">Sản phẩm cùng danh mục</h3><div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">`;
-                        filteredRelated.forEach(rp => {
-                            let rImgUrl = rp.images?.[0] || 'https://via.placeholder.com/300';
-                            const rIsAmazon = rp.platform?.includes('Amazon');
-                            let rFinalPrice = rp.price || 0;
-                            if (!rIsAmazon && rFinalPrice > 0 && rFinalPrice < 1000) { rFinalPrice = rFinalPrice * 1000; }
-                            const rPrice = rIsAmazon ? `$${(rFinalPrice / 100).toFixed(2)}` : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rFinalPrice);
-                            
-                            relatedProductsHtml += `
-                                <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:border-primary transition-colors cursor-pointer product-card flex flex-col h-full" onclick="goDetail('${rp.slug}')">
-                                    <div class="img-square-wrapper"><img src="${rImgUrl}" loading="lazy"></div>
-                                    <div class="p-2 sm:p-3 flex flex-col flex-grow">
-                                        <h4 class="text-xs sm:text-sm font-medium text-gray-800 product-title-clamp">${rp.name}</h4>
-                                        <div class="mt-auto pt-1.5 text-primary font-bold text-sm">${rPrice}</div>
-                                    </div>
-                                </div>`;
-                        });
-                        relatedProductsHtml += `</div></div>`;
-                    }
-                }
-
-                let seoBlockHtml = '';
-                if (cleanSeoContent) {
-                    seoBlockHtml = `
-                        <div class="mt-4 sm:mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                            <h2 class="text-base sm:text-xl font-bold text-gray-900 mb-3 pb-2 border-b border-gray-100">Đánh giá chi tiết sản phẩm</h2>
-                            <div class="seo-content-wrapper" id="seoWrapper">
-                                <div class="blog-content max-w-none text-[13px] sm:text-sm">${cleanSeoContent}</div>
-                                <div class="seo-overlay">
-                                    <button onclick="expandSeoContent()" class="bg-gray-800 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-gray-700 shadow-md transition text-xs sm:text-sm">
-                                        Đọc thêm chi tiết <i class="fa-solid fa-chevron-down ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                }
-
-                appContainer.innerHTML = `
-                    <button onclick="goHome()" class="mb-3 flex items-center text-gray-500 hover:text-primary transition font-medium text-xs sm:text-sm">
-                        <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại
-                    </button>
-                    
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
-                            <div class="p-3 sm:p-6 bg-gray-50 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                                <img src="${mainImg}" alt="${p.name}" class="max-w-full max-h-[250px] sm:max-h-[350px] object-contain mix-blend-multiply">
-                            </div>
-                            
-                            <div class="p-4 sm:p-6 flex flex-col justify-center">
-                                <span class="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1.5">${p.category || 'Danh mục'}</span>
-                                <h1 class="text-base sm:text-xl font-bold text-gray-900 leading-snug mb-2">${p.name}</h1>
-                                <div class="text-xl sm:text-2xl font-extrabold text-primary mb-3">${priceFormatted}</div>
-                                
-                                <div class="bg-red-50 text-red-700 text-xs p-2.5 rounded-lg mb-4 border border-red-100">
-                                    <i class="fa-solid fa-truck-fast mr-1"></i> Trợ giá vận chuyển khi mua qua đối tác.
-                                </div>
-                                
-                                <div class="prose prose-sm text-gray-600 mb-5 blog-content line-clamp-4 text-xs sm:text-sm">${cleanDescription}</div>
-                                
-                                <div class="flex gap-2 mt-auto">
-                                    <a href="${p.affiliate_link}" target="_blank" rel="nofollow" class="w-full bg-primary hover:bg-red-600 text-white font-bold text-xs sm:text-sm py-2.5 sm:py-3 rounded-lg shadow-sm transition flex items-center justify-center">
-                                        <i class="fa-solid fa-cart-shopping mr-1.5"></i> Mua trên ${platformDisplay}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${seoBlockHtml}
-                    ${relatedProductsHtml}
-                `;
-
-            } catch (error) { appContainer.innerHTML = `<div class="text-center py-10"><h2 class="text-lg sm:text-xl font-bold text-gray-700 mb-3">Opps! Sản phẩm bị lỗi hoặc không tồn tại.</h2><button onclick="goHome()" class="px-5 py-1.5 text-sm bg-primary text-white rounded-full font-bold">Quay lại trang chủ</button></div>`; }
-        }
-
-        async function renderPageView(pageId) {
-            let title = "";
-            let content = "";
-
-            switch(pageId) {
-                case 'chinh-sach-van-chuyen':
-                    title = "Chính sách vận chuyển";
-                    content = `
-                        <h3>1. Thời gian giao hàng</h3>
-                        <p>VPP TỊNH cam kết giao hàng đúng thời gian.</p>
-                    `;
-                    break;
-                case 'chinh-sach-doi-tra':
-                    title = "Chính sách đổi trả";
-                    content = `
-                        <h3>1. Điều kiện đổi trả</h3>
-                        <p>Khách hàng được quyền đổi trả sản phẩm trong vòng <b>7 ngày</b> kể từ ngày nhận hàng nếu thỏa mãn các điều kiện: Sản phẩm bị lỗi do nhà sản xuất, Giao sai mẫu mã/số lượng, Sản phẩm hư hỏng trong quá trình vận chuyển.</p>
-                    `;
-                    break;
-                case 'huong-dan-mua-si':
-                    title = "Hướng dẫn mua sỉ & Đại lý";
-                    content = `
-                        <h3>Kết nối trực tiếp xưởng sản xuất</h3>
-                        <p>VPP TỊNH tự hào là tổng kho phân phối không qua trung gian. Chúng tôi cung cấp chính sách chiết khấu cực kỳ hấp dẫn (lên đến 40%) cho khách hàng mua số lượng lớn.</p>
-                    `;
-                    break;
-                default:
-                    title = "Chính sách bảo mật";
-                    content = `<p>VPP TỊNH cam kết bảo vệ tuyệt đối thông tin cá nhân của khách hàng. Chúng tôi không chia sẻ thông tin của bạn cho bất kỳ bên thứ 3 nào khác.</p>`;
-            }
-
-            document.title = `${title} | VPP TỊNH`;
-            appContainer.innerHTML = `
-                <button onclick="goHome()" class="mb-3 flex items-center text-gray-500 hover:text-primary transition font-medium text-xs sm:text-sm">
-                    <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại trang chủ
-                </button>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-8 max-w-4xl mx-auto">
-                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-5 pb-3 border-b-2 border-primary">${title}</h1>
-                    <div class="blog-content text-sm sm:text-base text-gray-700">${content}</div>
-                </div>
-            `;
-        }
-
-        window.onload = () => {
-            handleRoute();
-            loadSeoSidebar();
-        };
-    </script>
-
-</body>
-</html>
+</MainLayout>

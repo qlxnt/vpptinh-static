@@ -1,0 +1,103 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import { supabase } from '../../../lib/supabase.js';
+
+// 1. HÀM GETSTATICPATHS: Lấy toàn bộ link sản phẩm để Astro "nặn" ra file HTML tĩnh
+export async function getStaticPaths() {
+    const { data: products, error } = await supabase
+        .from('vpp_catalog')
+        .select('*')
+        .in('platform', ['Shopee', 'Shopee VN', 'Lazada']);
+
+    if (error) {
+        console.error("Lỗi kéo dữ liệu URL:", error);
+        return [];
+    }
+
+    // Trả về danh sách các slug và truyền luôn toàn bộ dữ liệu của sản phẩm đó vào props
+    return products.map((product) => ({
+        params: { slug: product.slug },
+        props: { product },
+    }));
+}
+
+// 2. NHẬN DỮ LIỆU SẢN PHẨM TỪ PROPS VÀ XỬ LÝ
+const { product } = Astro.props;
+
+// Xử lý giá tiền
+const isAmazon = product.platform?.includes('Amazon');
+let finalPrice = product.price || 0;
+if (!isAmazon && finalPrice > 0 && finalPrice < 1000) {
+    finalPrice = finalPrice * 1000;
+}
+const priceFormatted = isAmazon 
+    ? `$${(finalPrice / 100).toFixed(2)}` 
+    : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalPrice);
+
+// Xử lý thông tin hiển thị
+const mainImg = product.images?.[0] || 'https://via.placeholder.com/500';
+const platformDisplay = product.platform === 'Shopee VN' ? 'Shopee' : (product.platform || 'Sàn TMĐT');
+
+// Dọn dẹp HTML bị dính mã markdown (nếu có)
+const cleanDescription = product.description ? product.description.replace(/```html/g, '').replace(/```/g, '').trim() : '';
+const cleanSeoContent = product.seo_content ? product.seo_content.replace(/```html/g, '').replace(/```/g, '').trim() : '';
+---
+
+<!-- 3. ĐỔ DỮ LIỆU VÀO GIAO DIỆN & TỐI ƯU THẺ META SEO TỰ ĐỘNG -->
+<MainLayout 
+    title={`${product.seo_title || product.name} | VPP TỊNH`}
+    description={cleanDescription.substring(0, 160).replace(/<[^>]*>?/gm, '') + "..."}
+    image={mainImg}
+    url={`https://vpptinh.com/san-pham/${product.slug}`}
+>
+    <!-- Nút quay lại -->
+    <a href="/" class="mb-3 inline-flex items-center text-gray-500 hover:text-primary transition font-medium text-xs sm:text-sm">
+        <i class="fa-solid fa-arrow-left mr-1.5"></i> Quay lại trang chủ
+    </a>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
+            <!-- Cột hình ảnh -->
+            <div class="p-3 sm:p-6 bg-gray-50 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                <img src={mainImg} alt={product.name} class="max-w-full max-h-[250px] sm:max-h-[350px] object-contain mix-blend-multiply">
+            </div>
+            
+            <!-- Cột thông tin -->
+            <div class="p-4 sm:p-6 flex flex-col justify-center">
+                <span class="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1.5">{product.category || 'Danh mục'}</span>
+                <h1 class="text-base sm:text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</h1>
+                <div class="text-xl sm:text-2xl font-extrabold text-primary mb-3">{priceFormatted}</div>
+                
+                <div class="bg-red-50 text-red-700 text-xs p-2.5 rounded-lg mb-4 border border-red-100">
+                    <i class="fa-solid fa-truck-fast mr-1"></i> Trợ giá vận chuyển khi mua qua đối tác.
+                </div>
+                
+                <!-- Sử dụng set:html để render mã HTML an toàn trong Astro -->
+                <div class="prose prose-sm text-gray-600 mb-5 blog-content line-clamp-4 text-xs sm:text-sm" set:html={cleanDescription}></div>
+                
+                <div class="flex gap-2 mt-auto">
+                    <!-- QUAN TRỌNG: Thêm rel="nofollow sponsored" chuẩn mực affiliate -->
+                    <a href={product.affiliate_link} target="_blank" rel="nofollow sponsored" class="w-full bg-primary hover:bg-red-600 text-white font-bold text-xs sm:text-sm py-2.5 sm:py-3 rounded-lg shadow-sm transition flex items-center justify-center">
+                        <i class="fa-solid fa-cart-shopping mr-1.5"></i> Mua trên {platformDisplay}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Khối Bài viết SEO (Chỉ hiển thị nếu có dữ liệu) -->
+    {cleanSeoContent && (
+        <div class="mt-4 sm:mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <h2 class="text-base sm:text-xl font-bold text-gray-900 mb-3 pb-2 border-b border-gray-100">Đánh giá chi tiết sản phẩm</h2>
+            <div class="seo-content-wrapper" id="seoWrapper">
+                <!-- Chèn HTML Bài viết SEO -->
+                <div class="blog-content max-w-none text-[13px] sm:text-sm" set:html={cleanSeoContent}></div>
+                <div class="seo-overlay">
+                    <button onclick="document.getElementById('seoWrapper').classList.add('expanded')" class="bg-gray-800 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-gray-700 shadow-md transition text-xs sm:text-sm">
+                        Đọc thêm chi tiết <i class="fa-solid fa-chevron-down ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    )}
+</MainLayout>
