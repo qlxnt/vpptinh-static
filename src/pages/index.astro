@@ -41,7 +41,13 @@ if (products) {
                 </div>
             )}
 
-            {Object.entries(groupedProducts).map(([category, items]) => (
+            {Object.entries(groupedProducts).sort((a, b) => {
+    // Ép danh mục "SPIRITUAL ITEMS" lên vị trí đầu tiên
+    if (a[0].toUpperCase() === 'SPIRITUAL ITEMS') return -1;
+    if (b[0].toUpperCase() === 'SPIRITUAL ITEMS') return 1;
+    // Sắp xếp các danh mục còn lại theo bảng chữ cái A-Z
+    return a[0].localeCompare(b[0]);
+}).map(([category, items]) => (
                 <div class="mb-5 bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
                     
                     <div class="flex justify-between items-end mb-3 border-b-2 border-primary pb-2">
