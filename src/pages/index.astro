@@ -1,12 +1,13 @@
 ---
-// Báo cho trình biên dịch biết đây là file Astro tĩnh
+// Khai báo một biến thực sự để tránh lỗi Missing Export của Astro Compiler
+const pageTitle = "VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng";
 ---
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng</title>
+    <title>{pageTitle}</title>
     <meta name="facebook-domain-verification" content="famm52c1ej9x2rlxu5y5hxq2tx23f6" />
     <meta name="p:domain_verify" content="d17be7533c035a2be4f0ff4b71feb5e1"/>
 
@@ -20,7 +21,6 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- Đã thêm is:inline vào tất cả thẻ script để tránh lỗi biên dịch Astro -->
     <script is:inline src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
