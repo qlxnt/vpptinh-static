@@ -1,3 +1,6 @@
+---
+// Báo cho trình biên dịch biết đây là file Astro tĩnh
+---
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -7,23 +10,22 @@
     <meta name="facebook-domain-verification" content="famm52c1ej9x2rlxu5y5hxq2tx23f6" />
     <meta name="p:domain_verify" content="d17be7533c035a2be4f0ff4b71feb5e1"/>
 
-<meta property="og:title" content="VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng" />
-<meta property="og:description" content="Chuyên cung cấp sỉ lẻ văn phòng phẩm, thiết bị văn phòng và đồ thờ cúng cao cấp.!" />
-<meta property="og:image" content="https://vpptinh.com/static/banner-share.jpg" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://vpptinh.com/" />
+    <meta property="og:title" content="VPP TỊNH - Cung Cấp Văn Phòng Phẩm & Đồ Thờ Cúng" />
+    <meta property="og:description" content="Chuyên cung cấp sỉ lẻ văn phòng phẩm, thiết bị văn phòng và đồ thờ cúng cao cấp.!" />
+    <meta property="og:image" content="https://vpptinh.com/static/banner-share.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://vpptinh.com/" />
     
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <!-- Đã xóa bỏ đoạn script ép chuyển hướng sang en.html tại đây -->
-
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Đã thêm is:inline vào tất cả thẻ script để tránh lỗi biên dịch Astro -->
+    <script is:inline src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <script>
+    <script is:inline>
         tailwind.config = {
             theme: { extend: { colors: { primary: '#ee4d2d', amazon: '#ff9900', } } }
         }
@@ -69,21 +71,21 @@
         .fab-btn:hover { transform: scale(1.1); }
         .fab-zalo { background-color: #0068ff; }
     </style>
-    <script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1660654998507019');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
-/></noscript>
+    <script is:inline>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1660654998507019');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
+    /></noscript>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 flex flex-col min-h-screen">
 
@@ -134,8 +136,6 @@ src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
                 </div>
 
                 <div class="flex items-center space-x-2 sm:space-x-5 pl-1 sm:pl-2">
-                    <!-- Đã gỡ bỏ khối chuyển đổi ngôn ngữ VN/EN tại đây -->
-
                     <div class="relative cursor-pointer text-gray-600 hover:text-primary transition hidden sm:block">
                         <i class="fa-solid fa-cart-shopping text-2xl"></i>
                         <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
@@ -216,7 +216,7 @@ src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
         </div>
     </footer>
 
-    <script>
+    <script is:inline>
         const SUPABASE_URL = 'https://nwjttlsrogmgjqwuyokb.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53anR0bHNyb2dtZ2pxd3V5b2tiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU3OTc0NiwiZXhwIjoyMDkwMTU1NzQ2fQ.juiQrHJWAnC90bU6Ip96fS8Qd6PaGDQnzv9vdj-UnlI'; 
         
@@ -295,7 +295,6 @@ src="https://www.facebook.com/tr?id=1660654998507019&ev=PageView&noscript=1"
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Đã cập nhật hàm goHome() để đẩy url về trang gốc sạch sẽ
         function goHome() { window.history.pushState({}, '', '/'); handleRoute(); }
         function goDetail(slug) { window.history.pushState({}, '', `?slug=${slug}`); handleRoute(); }
         function goCategory(cat) { window.history.pushState({}, '', `?cat=${encodeURIComponent(cat)}`); handleRoute(); }
